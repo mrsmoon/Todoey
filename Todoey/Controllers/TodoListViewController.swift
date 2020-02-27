@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
 
     @IBOutlet weak var searchBar: UISearchBar!
     
@@ -32,7 +32,7 @@ class TodoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
         
@@ -73,12 +73,12 @@ class TodoListViewController: UITableViewController {
             if textField.text != "" {
                 if let currentCategory = self.selectedCategory {
                     do {
-                        try self.realm.write{
+                        try self.realm.write {
                             let newItem = Item()
                             newItem.title = textField.text!
                             newItem.dateCreated = Date()
                         // as default, newItem.done is assigned = false
-                        currentCategory.items.append(newItem)
+                            currentCategory.items.append(newItem)
                         }
                     } catch  {
                         print("Error adding items: \(error)")
@@ -100,28 +100,34 @@ class TodoListViewController: UITableViewController {
     func loadItems() {
         
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-        
-        
-//        let results = realm.objects(Item.self)
-//
-//        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
-//        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [(predicate ?? categoryPredicate)])
-//        request.predicate = compoundPredicate
-//        do {
-//            itemArray = try context.fetch(request)
-//        } catch {
-//            print("Error fetching items from context: \(error.localizedDescription)")
-//        }
+    
         tableView.reloadData()
         
     }
+    
+//MARK: - Delete data from Swipe
+    
+    override func updateModel(at indexPath: IndexPath) {
+        
+        if let itemToDelete = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                realm.delete(itemToDelete)
+                }
+            }catch {
+                print("Error deleting item: \(error)")
+            }
+        }
+    }
 }
+
 //MARK: - Search Bar Methods
 extension TodoListViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!) //[cd]: case and diacritical insensitive
         todoItems = todoItems?.filter(predicate).sorted(byKeyPath: "title", ascending: true)
+        
         tableView.reloadData()
     
     }
