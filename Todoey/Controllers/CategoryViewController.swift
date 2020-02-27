@@ -20,17 +20,28 @@ class CategoryViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+       //navigationController?.navigationBar.barTintColor = categories[]
+        
         loadCategories()
         
         tableView.separatorStyle = .none
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("Navigation bar does not exist")
+        }
+        let color = UIColor.flatLime()
+        let appearance = UINavigationBarAppearance()
         
-        //tableView.rowHeight = 90.0
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = color
+        
+        appearance.titleTextAttributes = [.foregroundColor: ContrastColorOf(color, returnFlat: true) ]
+        appearance.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(color, returnFlat: true) ]
+        
+        navBar.scrollEdgeAppearance = appearance
+        navBar.tintColor = ContrastColorOf(color, returnFlat: true)
     }
 
     // MARK: - Table view data source
@@ -43,9 +54,13 @@ class CategoryViewController: SwipeTableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
-        
-        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].color ?? "6ECFFC")
+        if let category = categories?[indexPath.row] {
+            cell.textLabel?.text = category.name
+            cell.backgroundColor = UIColor(hexString: category.color)
+            guard let categoryColor = UIColor(hexString: category.color) else { fatalError() }
+            
+            cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+        }
 
         return cell
     }
@@ -54,6 +69,7 @@ class CategoryViewController: SwipeTableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "goToItems", sender: self)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -73,7 +89,7 @@ class CategoryViewController: SwipeTableViewController {
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             if textField.text != ""{
                 let newCategory = Category()
-                newCategory.name = textField.text!
+                newCategory.name = textField.text!.capitalized
                 newCategory.color = UIColor.randomFlat().hexValue()
                 self.save(newCategory)
             }
@@ -110,14 +126,14 @@ class CategoryViewController: SwipeTableViewController {
     
     override func updateModel(at indexPath: IndexPath) {
         if let categoryToDelete = self.categories?[indexPath.row] {
-                   do {
-                       try self.realm.write {
-                       self.realm.delete(categoryToDelete)
-                       }
-                   } catch {
-                       print("Error deleting selected category: \(error)")
-                   }
-               }
+            do {
+                try self.realm.write {
+                self.realm.delete(categoryToDelete)
+                }
+            } catch {
+                print("Error deleting selected category: \(error)")
+            }
+        }
     }
 }
 

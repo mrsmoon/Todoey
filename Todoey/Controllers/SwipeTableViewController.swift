@@ -43,7 +43,7 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
         }
         // customize the action appearance
         deleteAction.image = UIImage(named: "delete-icon")
-
+        
         return [deleteAction]
     }
     

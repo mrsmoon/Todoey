@@ -24,8 +24,35 @@ class TodoListViewController: SwipeTableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         tableView.separatorStyle = .none
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if let colorHex = selectedCategory?.color {
+            title = selectedCategory?.name
+            guard let navBar = navigationController?.navigationBar else {
+                fatalError("Navigation bar does not exist")
+            }
+            if let color = UIColor(hexString: colorHex) {
+                
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = color
+                
+                appearance.titleTextAttributes = [.foregroundColor: ContrastColorOf(color, returnFlat: true) ]
+                appearance.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: ContrastColorOf(color, returnFlat: true) ]
+                //navBar.standardAppearance = appearance
+                
+                navBar.scrollEdgeAppearance = appearance
+                navBar.tintColor = ContrastColorOf(color, returnFlat: true)
+                
+                searchBar.barTintColor = color
+                searchBar.searchTextField.backgroundColor = .flatWhite()
+            }
+        }
+    }
+    
 //MARK: - TableView DataSource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -79,7 +106,7 @@ class TodoListViewController: SwipeTableViewController {
                     do {
                         try self.realm.write {
                             let newItem = Item()
-                            newItem.title = textField.text!
+                            newItem.title = textField.text!.capitalized
                             newItem.dateCreated = Date()
                         // as default, newItem.done is assigned = false
                             currentCategory.items.append(newItem)
